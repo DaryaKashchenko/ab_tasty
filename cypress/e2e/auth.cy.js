@@ -12,7 +12,7 @@ import {
     checkLocation,
     maskedEmail,
     tripleClickToSignIn,
-    loginWithMFA, checkLoginPageElements
+    loginWithMFA, checkLoginPageElements, loginWithoutCode
 } from "../utils/auth"
 const dataset = require('../utils/testData.json')
 let loginP
@@ -28,14 +28,14 @@ describe('Authorization functional',
 
         describe('check login with email and password', function () {
 
-            it('check the link of login page', function () {
+            it('Login page accessibility and visibility', function () {
 
                 navigateToLoginPage()
                 cy.url().should('include', '/login')
 
             })
 
-            it('valid email/pass - mocked', function () {
+            it('Valid email and password check - mocked', function () {
 
                 successLoginResp()
                 loginWithEmail(Cypress.env('USER1'), Cypress.env('PASS1'))
@@ -44,7 +44,7 @@ describe('Authorization functional',
 
             })
 
-            it('check if email and pass empty - sign in btn is disabled', function () {
+            it('Check sign in btn is disabled with empty email and password', function () {
 
                 navigateToLoginPage()
                 cy.url().should('include', '/login')
@@ -52,7 +52,7 @@ describe('Authorization functional',
 
             })
 
-            it('email not in DB - mocked', function () {
+            it('Email not in DB check - mocked', function () {
 
                 emailNotInDBResp()
                 loginWithEmail(Cypress.env('EMAILNOTINDB'), Cypress.env('PASS1'))
@@ -62,7 +62,7 @@ describe('Authorization functional',
 
             })
 
-            it('invalid email check', function () {
+            it('Invalid email check', function () {
 
                 const invalidEmail = 'useryahoo'
                 navigateToLoginPage()
@@ -80,9 +80,9 @@ describe('Authorization functional',
                 loginP.validationErrorEmail()
             })
 
-            it('invalid password for non-SSO user', function () {
+            it('Password validation for non-SSO user', function () {
 
-                const invalidPass = '1234'
+                const invalidPass = '345'
                 loginWithEmail(Cypress.env('USER1'), invalidPass)
                 loginP.getSubmitBtn().click()
                 loginP.validationErrorEmail()
@@ -92,7 +92,7 @@ describe('Authorization functional',
 
         describe('check SSO and Google login', function () {
 
-            it('SSO recognized user redirected - mocked', function () {
+            it('SSO login for SSO recognized user - mocked', function () {
 
                 successLoginResp()
                 navigateToLoginPage()
@@ -114,7 +114,7 @@ describe('Authorization functional',
 
             })
 
-            it ('login with Google - mocked', function () {
+            it ('Login with Google - mocked', function () {
 
                 const googleCred = {
                     email: 'testovtesttest11111@gmail.com',
@@ -136,7 +136,56 @@ describe('Authorization functional',
 
         })
 
-        describe ('reset login functional', function (){
+        describe ('MFA functional', function () {
+
+            for (const data of dataset )
+                it(`MFA code requirement for ${data.email} user - mocked`,
+                    function () {
+
+                        loginWithMFA(data.email, data.password, data.code)
+                        loginP.getSubmitBtn().click()
+                        cy.wait('@mfaReq')
+                        cy.url().should('eq', '/ABTastyPlatform')
+
+                    })
+
+            it ('Save the device for MFA', function () {
+
+                loginWithMFA(dataset[0].email, dataset[0].password, dataset[0].code)
+                loginP.rememberDevice()
+                loginP.checkCheckbox()
+                loginP.getSubmitBtn().click()
+                cy.wait('@mfaReq')
+
+            })
+
+            it ('MFA code expiration', function () {
+
+                loginWithoutCode(dataset[0].email, dataset[0].password)
+                cy.wait(60000)
+                loginP.fillMfa(dataset[0].code)
+                loginP.getSubmitBtn().click()
+                cy.wait('@mfaReq')
+                expect(cy.contains('Whooops! The code you entered is incorrect. Please try again.')).to.be.visible()
+
+            })
+
+            it ('Resend the MFA code - and incorrect code check', function () {
+
+                const newCode = '111111'
+                loginWithoutCode(dataset[0].email, dataset[0].password)
+                loginP.resendTheCode()
+                loginP.fillMfa(newCode)
+                loginP.getSubmitBtn().click()
+                cy.wait('@mfaReq')
+                cy.url().should('eq', '/ABTastyPlatform')
+
+
+            })
+
+        })
+
+        describe ('reset password functional', function (){
 
             it('Password reset link to valid account', function () {
 
@@ -191,52 +240,6 @@ describe('Authorization functional',
                 // })
                 // cy.get('@iframeBody').find('div[role="checkbox"]').click()
                 // cy.get('@iframeBody').find('#recaptcha-verify-button').click()
-
-
-            })
-
-        })
-
-        describe ('MFA functional', function () {
-
-            for (const data of dataset )
-                it(`MFA code requirement for ${data.email} user - mocked`,
-                    function () {
-
-                        loginWithMFA(data.email, data.password, data.code)
-                        loginP.getSubmitBtn().click()
-                        cy.wait('@mfaReq')
-                        cy.url().should('eq', '/ABTastyPlatform')
-
-                    })
-
-            it ('Save the device for MFA', function () {
-
-                loginWithMFA(dataset[0].email, dataset[0].password, dataset[0].code)
-                loginP.rememberDevice()
-                loginP.checkCheckbox()
-                loginP.getSubmitBtn().click()
-                cy.wait('@mfaReq')
-
-            })
-
-            it ('MFA code expiration', function () {
-
-                loginWithMFA(dataset[0].email, dataset[0].password, dataset[0].code)
-                cy.wait(60000)
-                loginP.getSubmitBtn().click()
-                cy.wait('@mfaReq')
-                expect(cy.contains('Whooops! The code you entered is incorrect. Please try again.')).to.be.visible()
-
-            })
-
-            it ('Resend the MFA code', function () {
-
-                loginWithMFA(dataset[0].email, dataset[0].password, dataset[0].code)
-                loginP.resendTheCode()
-                loginP.getSubmitBtn().click()
-                cy.wait('@mfaReq')
-                cy.url().should('eq', '/ABTastyPlatform')
 
 
             })

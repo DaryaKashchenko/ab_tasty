@@ -176,6 +176,16 @@ export const loginWithMFA = (email, pass, code) => {
 
 }
 
+export const loginWithoutCode = (email, pass) => {
+
+    loginToRedirectToMfa()
+    loginWithEmail( email , pass)
+    loginP.getSubmitBtn().click()
+    cy.wait('@loginRequestMfa')
+    mfaRequest()
+
+}
+
 export const checkLoginPageElements = () => {
 
     cy.get('img').should('have.attr', 'src')
