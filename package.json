@@ -1,0 +1,23 @@
+{
+  "name": "ab_tasty",
+  "version": "1.0.0",
+  "description": "test",
+  "main": "cypress.config.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DaryaKashchenko/ab_tasty.git"
+  },
+  "author": "Darya troshina",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/DaryaKashchenko/ab_tasty/issues"
+  },
+  "homepage": "https://github.com/DaryaKashchenko/ab_tasty#readme",
+  "devDependencies": {
+    "cypress": "^12.11.0",
+    "dotenv": "^16.0.3"
+  }
+}
